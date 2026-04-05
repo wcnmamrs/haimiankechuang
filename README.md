@@ -1,164 +1,248 @@
-海绵科技综合脚本
+# 海绵科创综合脚本
 
-一个自动化脚本，用于海绵科技网站的每日登录、自动签到与积分兑换。
+## 项目简介
+这是一个自动兑换积分礼品的Python脚本，支持自动登录、定时兑换、多礼品选择、连发请求等功能。专门用于海绵科创
 
-"[图片] https://img.shields.io/badge/python-3.6+-blue.svg" (https://www.python.org/)
+## 功能特性
+- 自动登录获取Cookie
+- 定时任务执行（登录、兑换、签到）
+- 多礼品选择与兑换
+- 连发请求功能
+- 兑换记录查看
+- Cookie解析
+- 浏览器管理
+- 截图功能
+- 日志记录
 
-"[图片] https://img.shields.io/badge/License-MIT-yellow.svg" (LICENSE)
+## 安装要求
 
-"[图片] https://img.shields.io/badge/code%20style-PEP8-brightgreen.svg" (https://www.python.org/dev/peps/pep-0008/)
+### 系统要求
+- Python 3.8+
+- Chrome浏览器
+- ChromeDriver
 
- 功能
+### Windows系统特别标注
+第208行脚本中指定了ChromeDriver的路径为 /usr/bin/chromedriver，在Windows上运行时，您需要将其修改为您的ChromeDriver在Windows上的实际路径（例如 C:\\path\\to\\chromedriver.exe）
 
--  全自动流程：自动登录、签到、兑换礼品，解放双手。
--  配置驱动：所有账号、定时任务、行为选项均通过外部JSON文件配置，与代码分离。
--  定时任务：内置任务调度器，可自定义每日执行登录、签到、兑换的时间。
--  双模式支持：支持
-"headless"（无头）和
-"gui"（图形界面）两种浏览器模式，适应服务器与个人电脑环境。
--  状态持久化：自动保存与加载Cookie，避免频繁登录。
--  操作可追溯：关键步骤自动截图，所有运行日志完整记录到文件。
--  交互式CLI：提供丰富的命令行命令，方便手动执行、调试和状态查看。
+### 系统依赖安装
 
- 前置依赖
+#### 1. 基础系统更新
 
-运行本脚本需要准备以下环境：
+bash
 
-1. 系统与浏览器依赖（必需）
-
-这是Selenium自动化运行的基础。
-
-- Google Chrome 或 Chromium 浏览器
-- ChromeDriver（其版本必须与已安装的Chrome浏览器的主版本号匹配）
-
-Linux安装示例：
-
-# Ubuntu/Debian
 sudo apt update
-sudo apt install chromium-browser chromium-chromedriver
 
-# CentOS/RHEL
-sudo yum install epel-release
-sudo yum install chromium chromium-driver
-
-其他系统请访问 "ChromeDriver官网" (https://chromedriver.chromium.org/) 下载匹配的驱动，并确保
-"chromedriver"命令可在终端中执行。
-
-2. Python包依赖
-
-脚本所需的Python第三方库如下（详见 
-"requirements.txt"）：
-
-selenium>=4.15.0
-requests>=2.31.0
-schedule>=1.2.0
+sudo apt upgrade -y
 
 
- 核心使用指南
+#### 2. 安装Python3和pip3
 
-程序运行后，在 
-">>>" 提示符下输入命令：
+bash
 
-命令 功能描述
+sudo apt install python3 python3-pip python3-venv -y
 
-"start" 执行完整流程（登录 → 兑换）
 
-"start1" 仅执行登录（更新Cookie）
+#### 3. 安装Chrome浏览器
 
-"start2" 仅使用现有Cookie兑换礼品
+bash
 
-"dk" 执行自动签到任务
+安装必要的依赖
 
-"status" 显示程序运行状态、Cookie、定时任务等信息
+sudo apt install -y wget gnupg
 
-"config" 重新配置账号密码
+下载并安装Chrome
 
-"zs" 进入系统设置菜单，调整任务时间、浏览器模式等
+wget -q -O - "https://dl-ssl.google.com/linux/linux_signing_key.pub" (https://dl-ssl.google.com/linux/linux_signing_key.pub) | sudo apt-key add -
 
-"jp [描述]" 截取当前浏览器页面并保存
+sudo sh -c 'echo "deb [arch=amd64] "http://dl.google.com/linux/chrome/deb/" (http://dl.google.com/linux/chrome/deb/) stable main" >> /etc/apt/sources.list.d/google-chrome.list'
 
-"browser" 管理浏览器（关闭、重新初始化等）
+sudo apt update
 
-"log" 查看最近的运行日志
+sudo apt install -y google-chrome-stable
 
-"help" 显示命令帮助
+检查Chrome版本
 
-"exit" 安全退出程序
+google-chrome --version
 
-⚙️ 配置详解
 
-所有配置均通过JSON文件管理，无需修改代码。
+#### 4. 安装ChromeDriver
 
-1. 账号配置 (
-"yunmc_config.json")
+bash
 
-{
-  "username": "您的登录邮箱",
-  "password": "您的登录密码"
-}
+获取Chrome版本
 
-2. 程序设置 (
-"yunmc_settings.json")
+CHROME_VERSION= (google-chrome --version | awk '{print  3}' | cut -d'.' -f1)
 
-{
-  "auto_task_enabled": true,       // 总开关
-  "login_time": "11:00",           // 自动登录时间
-  "exchange_time": "12:00",        // 自动兑换时间
-  "signin_time": "11:30",          // 自动签到时间
-  "auto_signin_enabled": true,     // 签到任务开关
-  "close_browser_after_login": false, // 登录后关闭浏览器以节省资源
-  "browser_default_mode": "headless"  // 默认浏览器模式：`headless` 或 `gui`
-}
+下载对应版本的ChromeDriver
 
-修改设置后，在程序内使用 
-"zs" 命令的“保存”选项或重启程序生效。
+CHROMEDRIVER_VERSION= (curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_ CHROME_VERSION")
 
- 高级与故障排除
+wget -N "https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip" (https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip)
 
-浏览器模式
+解压并安装
 
-- 
-"headless" (无头模式)：无图形界面，资源占用少，适用于服务器。推荐部署使用。
-- 
-"gui" (图形界面模式)：会打开浏览器窗口，便于直观调试和验证。适用于桌面环境。
+unzip -o chromedriver_linux64.zip
 
-文件说明
+chmod +x chromedriver
 
-- 
-"rz.txt": 完整的运行日志，包含时间戳和所有操作记录。
-- 
-"yunmc_cookie.json": 自动保存的网站会话Cookie，避免重复登录。
-- 
-"screenshot_*.png": 自动或手动截取的屏幕截图，用于问题排查。
+sudo mv chromedriver /usr/bin/chromedriver
 
-常见问题
+清理
 
-Q: 浏览器初始化失败，提示
-"session not created"
+rm chromedriver_linux64.zip
 
-A: 99%的原因是ChromeDriver版本与已安装的Chrome浏览器版本不匹配。请确保两者主版本号一致。
+验证安装
 
-Q: 定时任务到了时间没有执行
+chromedriver --version
 
-A: 请检查：
 
-1. 程序是否在后台持续运行（建议使用
-"screen"或
-"tmux"）。
-2. 
-"auto_task_enabled" 是否设置为 
-"true"。
-3. 系统时间和时区设置是否正确。
+#### 5. 安装X11相关依赖（用于图形界面模式）
 
-Q: 登录失败怎么办？
+bash
 
-A: 建议：
+sudo apt install -y xvfb x11-apps
 
-1. 在
-"zs"设置中临时切换为
-"gui"模式，观察登录过程。
-2. 检查
-"rz.txt"日志和自动生成的
-"screenshot_*.png"截图文件分析原因。
-3. 手动执行
-"start1"命令测试登录流程。
+
+## Python依赖
+
+### 依赖文件内容 (requirements.txt)
+
+selenium==4.15.0
+
+schedule==1.2.0
+
+requests==2.31.0
+
+
+### 安装Python依赖
+
+bash
+
+创建虚拟环境
+
+python3 -m venv venv
+
+source venv/bin/activate
+
+安装依赖
+
+pip install -r requirements.txt
+
+
+## 使用方法
+
+### 1. 首次运行
+
+bash
+
+python3 main.py
+
+
+首次运行会生成配置文件模板，需要编辑`config.json`文件填写账号密码。
+
+### 2. 常用命令
+
+start     - 完整流程（登录+兑换）
+
+start1    - 仅登录
+
+start2    - 仅兑换
+
+dk        - 自动签到
+
+status    - 显示当前状态
+
+config    - 配置账号密码
+
+zs        - 系统设置
+
+gift      - 选择礼品
+
+jx        - 解析Cookie信息
+
+jp        - 截图浏览器当前页面
+
+browser   - 浏览器管理
+
+lp        - 查看兑换记录
+
+log       - 查看日志
+
+help      - 显示帮助
+
+exit      - 退出程序
+
+
+### 3. 配置账号密码
+运行脚本后，输入`config`命令配置账号密码，或直接编辑`config.json`文件。
+
+### 4. 礼品选择
+输入`gift`命令选择要兑换的礼品，支持多选。
+
+## 定时任务
+脚本启动后会自动在后台运行定时任务：
+- 登录时间：11:00:00
+- 签到时间：11:30:00
+- 兑换时间：12:00:00
+
+可通过`zs`命令调整时间设置。
+
+## 文件结构
+
+.
+
+├── main.py              # 主程序
+
+├── config.json          # 配置文件
+
+├── yunmc_cookie.json    # Cookie存储
+
+├── rz.txt              # 日志文件
+
+├── screenshot_*.png    # 截图文件
+
+├── requirements.txt    # Python依赖
+
+└── README.md          # 说明文档
+
+
+## 注意事项
+
+### 1. 无头模式
+默认使用无头模式运行，不显示浏览器界面。如需图形界面，可在设置中切换。
+
+### 2. 时间设置
+时间格式支持HH:MM或HH:MM:SS，支持秒级精度。
+
+### 3. 连发功能
+开启连发功能后，会在指定时间点连续发送多个请求，避免因网络延迟错过兑换。
+
+### 4. 浏览器资源
+默认启用"登录后关闭浏览器"选项，减少资源占用。可在设置中关闭。
+
+### 5. 截图功能
+默认关闭截图功能，需要时可在设置中开启。
+
+## 故障排除
+
+### 1. ChromeDriver版本问题
+确保ChromeDriver版本与Chrome浏览器版本匹配。
+
+### 2. 无头模式问题
+如果无头模式无法正常工作，尝试安装Xvfb：
+
+bash
+
+sudo apt install xvfb
+
+Xvfb :99 &
+
+export DISPLAY=:99
+
+
+### 3. 权限问题
+确保ChromeDriver有执行权限：
+
+bash
+
+chmod +x /usr/bin/chromedriver
