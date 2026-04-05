@@ -3,7 +3,7 @@
 海绵科创综合脚本
 代码:deepseek模型制作
 逆向:QQ3245987504
-版本:v3.2
+版本:v3.3
 """
 
 import os
@@ -915,9 +915,18 @@ def http_exchange_gift_burst(gift_ids=None, burst_count=None, burst_interval=Non
     
     return success_count > 0
 
+# ============ HTTP请求兑换模块 ============
 def http_exchange_gift():
     """通过HTTP请求兑换礼品（兼容原有代码）"""
-    return http_exchange_gift_burst()
+    # 检查连发开关状态
+    if not settings.get("burst_enabled", False):
+        # 如果连发功能关闭，只执行1次兑换
+        return http_exchange_gift_burst(burst_count=1, burst_interval=0)
+    else:
+        # 如果连发功能开启，使用配置的连发参数
+        burst_count = settings.get("burst_count", 10)
+        burst_interval = settings.get("burst_interval", 1)
+        return http_exchange_gift_burst(burst_count=burst_count, burst_interval=burst_interval)
 
 # ============ 自动签到模块 ============
 def auto_signin():
